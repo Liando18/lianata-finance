@@ -113,8 +113,8 @@ npm run dev
 
 ## Developer
 
-- **Aprilian Gevindo** — Pengembang utama
-- **Hesti Ananta** — Pengembang utama
+- **Aprilian Gevindo, M.kom**
+- **Hesti Ananta, S.Kom**
 
 ---
 
