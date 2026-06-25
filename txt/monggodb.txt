@@ -1,0 +1,4 @@
+user=liando1801_db_user
+pass=O1jAOJGTWv7EtkP3
+url=mongodb+srv://liando1801_db_user:O1jAOJGTWv7EtkP3@cluster0.yf3jahh.mongodb.net/?appName=Cluster0
+uri=mongodb+srv://liando1801_db_user:O1jAOJGTWv7EtkP3@cluster0.yf3jahh.mongodb.net/?appName=Cluster0
