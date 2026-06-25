@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/public/logo-lianata-finance.png" alt="Lianata Finance" width="80" height="80" />
+  <img src="public/logo-lianata-finance.png" alt="Lianata Finance" width="80" height="80" />
   <h1 align="center">Lianata Finance</h1>
   <p align="center">
     Aplikasi manajemen keuangan untuk pribadi, UMKM, dan bisnis
@@ -70,20 +70,29 @@ Memberikan solusi keuangan yang mudah diakses, bebas biaya, dan berbasis data â€
 
 ```bash
 # Clone repositori
-git clone https://github.com/username/lianata-finance.git
+git clone https://github.com/Liando18/lianata-finance.git
 
 # Masuk ke direktori
 cd lianata-finance
 
 # Install dependensi
 npm install
+```
 
-# Salin file environment
+Buat file `.env.local` dari template:
+```bash
+# Windows
+copy .env.example .env.local
+
+# Mac / Linux
 cp .env.example .env.local
-# Isi konfigurasi database, auth, email di .env.local
+```
 
+Isi konfigurasi database, auth, dan email di `.env.local`, lalu jalankan:
+
+```bash
 # Setup database
-npm run db:migrate
+npm run db:push
 
 # Jalankan development server
 npm run dev
