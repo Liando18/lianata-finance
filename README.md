@@ -113,7 +113,7 @@ npm run dev
 
 ## Developer
 
-- **Aprilian Gevindo, M.kom**
+- **Aprilian Gevindo, M.Kom**
 - **Hesti Ananta, S.Kom**
 
 ---
