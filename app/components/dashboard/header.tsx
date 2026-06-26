@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { Bell, Menu, Search, ChevronDown, User, Settings, CreditCard } from "lucide-react"
+import { Bell, Menu, Search, ChevronDown, Settings } from "lucide-react"
 import LogoutButton from "./logout-button"
 import { getEffectiveRole, type SessionUser } from "./session-context"
 
@@ -11,18 +11,29 @@ interface HeaderProps {
   user: SessionUser
 }
 
+interface NotificationItem {
+  id: number
+  title: string
+  desc: string
+  time: string
+  read: boolean
+}
+
 const roleLabel: Record<string, string> = { user: "User", admin: "Admin", owner: "Owner" }
 const roleColors: Record<string, string> = { user: "", admin: "text-amber-600", owner: "text-purple-600" }
+const businessLabels: Record<string, string> = { pribadi: "Pribadi", toko: "Toko", umkm: "UMKM", perusahaan: "Perusahaan" }
 
 export default function Header({ onMenuClick, user }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [notifLoading, setNotifLoading] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const initial = user.name?.charAt(0)?.toUpperCase() || "A"
   const effectiveRole = getEffectiveRole(user.role)
 
-  const notifications: Array<{ id: number; title: string; desc: string; time: string; read: boolean }> = []
+  const unreadCount = notifications.filter(n => !n.read).length
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -33,7 +44,25 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  useEffect(() => {
+    if (notifOpen && notifications.length === 0 && !notifLoading) {
+      setNotifLoading(true)
+      fetch("/api/notifications?limit=10")
+        .then(r => r.json())
+        .then(j => {
+          if (Array.isArray(j)) setNotifications(j)
+          else if (j.data) setNotifications(j.data)
+        })
+        .catch(() => {})
+        .finally(() => setNotifLoading(false))
+    }
+  }, [notifOpen, notifications.length, notifLoading])
+
+  function markAllRead() {
+    fetch("/api/notifications", { method: "PUT" })
+      .then(() => setNotifications(prev => prev.map(n => ({ ...n, read: true }))))
+      .catch(() => {})
+  }
 
   return (
     <header className="relative z-10 h-16 border-b border-border/60 bg-white/80 backdrop-blur-xl flex items-center justify-between px-3 sm:px-6 shrink-0">
@@ -78,32 +107,26 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
             <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl border border-border shadow-xl z-50 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
                 <h3 className="text-sm font-semibold text-foreground">Notifikasi</h3>
-                <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">Tandai dibaca</button>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-xs text-primary-600 hover:text-primary-700 font-medium">Tandai dibaca</button>
+                )}
               </div>
               <div className="max-h-72 overflow-y-auto">
-                {notifications.map((n) => (
-                  <button
-                    key={n.id}
-                    className={`w-full flex items-start gap-3 px-5 py-3.5 text-left hover:bg-gray-50 transition-colors ${
-                      !n.read ? "bg-primary-50/30" : ""
-                    }`}
-                  >
-                    <div
-                      className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                        !n.read ? "bg-primary-500" : "bg-transparent"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{n.title}</p>
-                      <p className="text-xs text-muted mt-0.5">{n.desc}</p>
-                      <p className="text-[11px] text-muted/60 mt-1">{n.time}</p>
+                {notifications.length === 0 ? (
+                  <div className="px-5 py-8 text-center text-sm text-muted">Belum ada notifikasi</div>
+                ) : (
+                  notifications.map((n) => (
+                    <div key={n.id} className={`flex items-start gap-3 px-5 py-3.5 ${!n.read ? "bg-primary-50/30" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? "bg-primary-500" : "bg-transparent"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{n.title}</p>
+                        <p className="text-xs text-muted mt-0.5">{n.desc}</p>
+                        <p className="text-[11px] text-muted/60 mt-1">{n.time}</p>
+                      </div>
                     </div>
-                  </button>
-                ))}
+                  ))
+                )}
               </div>
-              <button className="w-full py-3 text-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50/50 border-t border-border transition-colors">
-                Lihat Semua Notifikasi
-              </button>
             </div>
           )}
         </div>
@@ -115,15 +138,15 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
           >
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-foreground leading-tight">{user.name}</p>
-              <p className={`text-[11px] leading-tight ${roleColors[effectiveRole] || "text-muted"}`}>{roleLabel[effectiveRole]}</p>
+              <p className={`text-[11px] leading-tight ${roleColors[effectiveRole] || "text-muted"}`}>
+                {effectiveRole === "user" ? businessLabels[user.businessType || ""] || "Pribadi" : roleLabel[effectiveRole]}
+              </p>
             </div>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-medium shadow-sm shrink-0">
               {initial}
             </div>
             <ChevronDown
-              className={`hidden sm:block w-4 h-4 text-muted transition-transform duration-200 ${
-                profileOpen ? "rotate-180" : ""
-              }`}
+              className={`hidden sm:block w-4 h-4 text-muted transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
             />
           </button>
 
@@ -132,28 +155,17 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
               <div className="px-4 py-4 border-b border-border">
                 <p className="text-sm font-semibold text-foreground">{user.name}</p>
                 <p className="text-xs text-muted mt-0.5">{user.email}</p>
+                {effectiveRole === "user" && user.businessType && (
+                  <span className="inline-block mt-1.5 text-[10px] font-medium text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">
+                    {businessLabels[user.businessType] || user.businessType}
+                  </span>
+                )}
               </div>
               <div className="py-1">
-                {(effectiveRole === "user"
-                  ? [
-                      { icon: User, label: "Profil", href: "/dashboard/settings" },
-                      { icon: CreditCard, label: "Tagihan", href: "/dashboard/settings" },
-                      { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
-                    ]
-                  : [
-                      { icon: User, label: "Profil", href: "/dashboard/settings" },
-                      { icon: Settings, label: "Pengaturan", href: "/dashboard/settings" },
-                    ]
-                ).map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors"
-                  >
-                    <item.icon className="w-4 h-4 text-muted" />
-                    {item.label}
-                  </Link>
-                ))}
+                <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 transition-colors" onClick={() => setProfileOpen(false)}>
+                  <Settings className="w-4 h-4 text-muted" />
+                  Pengaturan
+                </Link>
               </div>
               <div className="border-t border-border py-1">
                 <LogoutButton />

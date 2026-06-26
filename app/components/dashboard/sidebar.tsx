@@ -21,6 +21,16 @@ import {
   Users,
   Shield,
   UserCog,
+  Package,
+  ShoppingCart,
+  Store,
+  Building2,
+  FileText,
+  Receipt,
+  Briefcase,
+  Banknote,
+  BookOpen,
+  CheckCheck,
 } from "lucide-react"
 import LogoutButton from "./logout-button"
 import { cn } from "@/lib/utils"
@@ -28,20 +38,40 @@ import { getEffectiveRole, type SessionUser } from "./session-context"
 
 type UserRole = "user" | "admin" | "owner"
 
-const allMenuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", roles: ["user", "admin", "owner"] as UserRole[] },
-  { icon: ArrowRightLeft, label: "Transaksi", href: "/dashboard/transactions", roles: ["user"] as UserRole[] },
-  { icon: FolderTree, label: "Kategori", href: "/dashboard/categories", roles: ["user"] as UserRole[] },
-  { icon: Wallet, label: "Dompet", href: "/dashboard/wallets", roles: ["user"] as UserRole[] },
-  { icon: Target, label: "Budget", href: "/dashboard/budgets", roles: ["user"] as UserRole[] },
-  { icon: HandCoins, label: "Hutang & Piutang", href: "/dashboard/debts", roles: ["user"] as UserRole[] },
-  { icon: RefreshCw, label: "Berulang", href: "/dashboard/recurring", roles: ["user"] as UserRole[] },
-  { icon: BarChart3, label: "Laporan", href: "/dashboard/reports", roles: ["user"] as UserRole[] },
-  { icon: Settings, label: "Pengaturan", href: "/dashboard/settings", roles: ["user", "admin", "owner"] as UserRole[] },
-  { icon: Activity, label: "Aktivitas", href: "/dashboard/activity", roles: ["admin", "owner"] as UserRole[] },
-  { icon: Users, label: "Kelola User", href: "/dashboard/users", roles: ["admin", "owner"] as UserRole[] },
-  { icon: UserCog, label: "Kelola Admin", href: "/dashboard/admins", roles: ["owner"] as UserRole[] },
-  { icon: Shield, label: "Sistem", href: "/dashboard/system", roles: ["owner"] as UserRole[] },
+interface MenuItem {
+  icon: typeof LayoutDashboard
+  label: string
+  href: string
+  roles: UserRole[]
+  businessTypes?: string[]
+}
+
+const allMenuItems: MenuItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", roles: ["user", "admin", "owner"] },
+  { icon: ArrowRightLeft, label: "Transaksi", href: "/dashboard/transactions", roles: ["user"] },
+  { icon: FolderTree, label: "Kategori", href: "/dashboard/categories", roles: ["user"] },
+  { icon: Wallet, label: "Dompet", href: "/dashboard/wallets", roles: ["user"] },
+  { icon: Target, label: "Budget", href: "/dashboard/budgets", roles: ["user"] },
+  { icon: HandCoins, label: "Hutang & Piutang", href: "/dashboard/debts", roles: ["user"] },
+  { icon: RefreshCw, label: "Berulang", href: "/dashboard/recurring", roles: ["user"] },
+  { icon: BarChart3, label: "Analisis", href: "/dashboard/analysis", roles: ["user"] },
+  { icon: FileText, label: "Laporan", href: "/dashboard/reports", roles: ["user"] },
+  { icon: Package, label: "Produk", href: "/dashboard/products", roles: ["user"], businessTypes: ["toko", "perusahaan"] },
+  { icon: Store, label: "Stok Barang", href: "/dashboard/stock", roles: ["user"], businessTypes: ["toko", "perusahaan"] },
+  { icon: ShoppingCart, label: "POS / Penjualan", href: "/dashboard/pos", roles: ["user"], businessTypes: ["toko", "perusahaan"] },
+  { icon: Building2, label: "Usaha", href: "/dashboard/businesses", roles: ["user"], businessTypes: ["umkm", "perusahaan"] },
+  { icon: Users, label: "Klien", href: "/dashboard/clients", roles: ["user"], businessTypes: ["umkm", "perusahaan"] },
+  { icon: FileText, label: "Invoice", href: "/dashboard/invoices", roles: ["user"], businessTypes: ["umkm", "perusahaan"] },
+  { icon: Receipt, label: "Pengeluaran Usaha", href: "/dashboard/business-expenses", roles: ["user"], businessTypes: ["umkm", "perusahaan"] },
+  { icon: Briefcase, label: "Karyawan", href: "/dashboard/employees", roles: ["user"], businessTypes: ["perusahaan"] },
+  { icon: Banknote, label: "Penggajian", href: "/dashboard/payroll", roles: ["user"], businessTypes: ["perusahaan"] },
+  { icon: BookOpen, label: "Pembukuan", href: "/dashboard/accounting", roles: ["user"], businessTypes: ["perusahaan"] },
+  { icon: CheckCheck, label: "Persetujuan", href: "/dashboard/approvals", roles: ["user"], businessTypes: ["perusahaan"] },
+  { icon: Settings, label: "Pengaturan", href: "/dashboard/settings", roles: ["user", "admin", "owner"] },
+  { icon: Activity, label: "Aktivitas", href: "/dashboard/activity", roles: ["admin", "owner"] },
+  { icon: Users, label: "Kelola User", href: "/dashboard/users", roles: ["admin", "owner"] },
+  { icon: UserCog, label: "Kelola Admin", href: "/dashboard/admins", roles: ["owner"] },
+  { icon: Shield, label: "Sistem", href: "/dashboard/system", roles: ["owner"] },
 ]
 
 interface SidebarProps {
@@ -54,10 +84,26 @@ export default function Sidebar({ open, onClose, user }: SidebarProps) {
   const pathname = usePathname()
   const initial = user.name?.charAt(0)?.toUpperCase() || "A"
   const effectiveRole = getEffectiveRole(user.role)
-  const menuItems = allMenuItems.filter((m) => m.roles.includes(effectiveRole))
+  const businessType = user.businessType || "pribadi"
+
+  const sectionLabels: Record<string, string> = {
+    pribadi: "Keuangan Pribadi",
+    toko: "Manajemen Toko",
+    umkm: "Keuangan UMKM",
+    perusahaan: "Keuangan Perusahaan",
+    lainnya: "Keuangan",
+  }
+
+  const menuItems = allMenuItems.filter((m) => {
+    if (!m.roles.includes(effectiveRole)) return false
+    if (effectiveRole !== "user") return true
+    if (m.businessTypes && !m.businessTypes.includes(businessType)) return false
+    return true
+  })
 
   const roleLabel: Record<UserRole, string> = { user: "User", admin: "Admin", owner: "Owner" }
   const roleColors: Record<UserRole, string> = { user: "text-primary-600", admin: "text-amber-600", owner: "text-purple-600" }
+  const businessLabels: Record<string, string> = { pribadi: "Pribadi", toko: "Toko", umkm: "UMKM", perusahaan: "Perusahaan" }
 
   return (
     <>
@@ -107,6 +153,9 @@ export default function Sidebar({ open, onClose, user }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+          <div className="px-3 pt-1 pb-2 text-[11px] font-medium text-muted uppercase tracking-wider">
+            {effectiveRole === "user" ? sectionLabels[businessType] || "Menu" : "Menu"}
+          </div>
           {menuItems.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -145,7 +194,7 @@ export default function Sidebar({ open, onClose, user }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-              <p className={`text-[11px] font-medium ${roleColors[effectiveRole]}`}>{roleLabel[effectiveRole]}</p>
+              <p className={`text-[11px] font-medium ${roleColors[effectiveRole]}`}>{effectiveRole === "user" ? businessLabels[businessType] || "Pribadi" : roleLabel[effectiveRole]}</p>
             </div>
             <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
           </div>

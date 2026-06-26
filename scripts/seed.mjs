@@ -227,6 +227,82 @@ const APRILIAN = {
   settings: [3, 3, "IDR", "id-ID", "dark"],
 }
 
+const TOKO = {
+  authId: "toko-001", email: "toko@lianata.app", name: "Toko Bahagia",
+  businessType: "toko", role: "user", userId: 5,
+  categories: [
+    [36, 5, "Penjualan Produk", "income",  "ShoppingBag", "#22c55e"],
+    [37, 5, "Modal Barang",     "income",  "TrendingUp",  "#3b82f6"],
+    [38, 5, "HPP",              "expense","Package",      "#ef4444"],
+    [39, 5, "Sewa Kios",        "expense","Building2",    "#f97316"],
+    [40, 5, "Gaji Karyawan",    "expense","Users",        "#ec4899"],
+    [41, 5, "Listrik & Air",    "expense","FileText",     "#06b6d4"],
+    [42, 5, "Lain-lain",        "expense","Plus",         "#64748b"],
+  ],
+  wallets: [
+    [15, 5, "Kas Toko",  "cash",    "5000000"],
+    [16, 5, "BRI",       "bank",    "25000000"],
+    [17, 5, "QRIS",      "ewallet", "3500000"],
+  ],
+  transactions() {
+    const data = []; let id = 115
+    const months = [4, 5, 6]
+    for (const m of months) {
+      const d = baseDay(m)
+      data.push(
+        [id++, 5, 15, 36, "4500000",  "income",  `Penjualan produk ${m}`,   `2025-${pm(m)}-${pd(d)}`],
+        [id++, 5, 16, 37, "2000000",  "income",  `Modal dari investor`,     `2025-${pm(m)}-${pd(d+3)}`],
+        [id++, 5, 15, 38, "2500000",  "expense","Beli stok barang",         `2025-${pm(m)}-${pd(d+5)}`],
+        [id++, 5, 15, 39,  "500000",  "expense","Sewa kios",                `2025-${pm(m)}-${pd(d+8)}`],
+        [id++, 5, 17, 40,  "700000",  "expense","Gaji 1 karyawan",          `2025-${pm(m)}-${pd(d+10)}`],
+      )
+    }
+    return data
+  },
+  budgets: [
+    [19, 5, 38,  "3000000", "monthly", 6, 2025],
+    [20, 5, 39,  "1000000", "monthly", 6, 2025],
+    [21, 5, 40,  "1500000", "monthly", 6, 2025],
+  ],
+  debts: [
+    [10, 5, "Pinjaman Supplier", "5000000", "2000000", "debt", "partial", "2025-09-30"],
+  ],
+  recurring: [
+    [8, 5, 15, 39, "500000", "expense", "Sewa kios",  "monthly", "2025-07-01"],
+    [9, 5, 15, 41, "300000", "expense", "Listrik & air", "monthly", "2025-07-05"],
+  ],
+  settings: [5, 5, "IDR", "id-ID", "light"],
+  products: [
+    [1, 5, "Kemeja Polos",      "75000",  "150000", 50, "KMJ-001"],
+    [2, 5, "Celana Chino",      "120000", "250000", 30, "CLN-001"],
+    [3, 5, "Topi Baseball",     "25000",  "55000",  100, "TPI-001"],
+    [4, 5, "Tas Ransel",        "80000",  "175000", 20, "TRS-001"],
+    [5, 5, "Sepatu Casual",     "150000", "300000", 15, "SPT-001"],
+  ],
+  stockMovements: [
+    [1, 5, 1, "in",  50, "65000",  "Supplier A"],
+    [2, 5, 2, "in",  30, "100000", "Supplier B"],
+    [3, 5, 3, "in", 100, "20000",  "Supplier A"],
+    [4, 5, 4, "in",  20, "70000",  "Supplier C"],
+    [5, 5, 5, "in",  15, "130000", "Supplier B"],
+    [6, 5, 1, "out", 12, null,     null],
+    [7, 5, 3, "out", 35, null,     null],
+  ],
+  posTransactions: [
+    [1, 5, "450000", "cash",   "Budi"],
+    [2, 5, "275000", "qris",   "Ani"],
+    [3, 5, "150000", "cash",   "Citra"],
+  ],
+  posItems: [
+    [1, 1, 1, 2, "150000", "300000"],
+    [2, 1, 3, 2, "55000",  "110000"],
+    [3, 1, 5, 1, "300000", "300000"],
+    [4, 2, 2, 1, "250000", "250000"],
+    [5, 2, 4, 1, "175000", "175000"],
+    [6, 3, 3, 3, "55000",  "165000"],
+  ],
+}
+
 const HESTI = {
   authId: "dev-hesti", email: "hesti@lianata.app", name: "Hesti Ananta",
   businessType: "pribadi", role: "admin", userId: 4,
@@ -286,7 +362,7 @@ const HESTI = {
   settings: [4, 4, "IDR", "id-ID", "light"],
 }
 
-const USERS = [DEMO, ADMIN, APRILIAN, HESTI]
+const USERS = [DEMO, ADMIN, APRILIAN, HESTI, TOKO]
 
 // ─────────────────────── Seeding helpers ───────────────────────
 
@@ -366,6 +442,46 @@ async function seedRecurring() {
   console.log(`  ✓ recurring — ${all.length} baris`)
 }
 
+async function seedProducts() {
+  const all = USERS.filter(u => u.products).flatMap(u => u.products)
+  if (all.length === 0) { console.log("  - products — tidak ada"); return }
+  const rows = all.map(p =>
+    `(${p[0]}, ${p[1]}, '${p[2]}', '${p[3]}', '${p[4]}', ${p[5]}, '${p[6]}')`
+  ).join(",\n    ")
+  await exec(`INSERT INTO "products" (id, user_id, name, purchase_price, selling_price, stock, sku) VALUES\n    ${rows}`)
+  console.log(`  ✓ products — ${all.length} baris`)
+}
+
+async function seedStockMovements() {
+  const all = USERS.filter(u => u.stockMovements).flatMap(u => u.stockMovements)
+  if (all.length === 0) { console.log("  - stock_movements — tidak ada"); return }
+  const rows = all.map(m =>
+    `(${m[0]}, ${m[1]}, ${m[2]}, '${m[3]}', ${m[4]}, ${m[5] !== null ? `'${m[5]}'` : "NULL"}, ${m[6] !== null ? `'${m[6]}'` : "NULL"})`
+  ).join(",\n    ")
+  await exec(`INSERT INTO "stock_movements" (id, user_id, product_id, type, quantity, price, supplier) VALUES\n    ${rows}`)
+  console.log(`  ✓ stock_movements — ${all.length} baris`)
+}
+
+async function seedPosTransactions() {
+  const all = USERS.filter(u => u.posTransactions).flatMap(u => u.posTransactions)
+  if (all.length === 0) { console.log("  - pos_transactions — tidak ada"); return }
+  const rows = all.map(t =>
+    `(${t[0]}, ${t[1]}, '${t[2]}', '${t[3]}', '${t[4]}')`
+  ).join(",\n    ")
+  await exec(`INSERT INTO "pos_transactions" (id, user_id, total, payment_method, customer_name) VALUES\n    ${rows}`)
+  console.log(`  ✓ pos_transactions — ${all.length} baris`)
+}
+
+async function seedPosItems() {
+  const all = USERS.filter(u => u.posItems).flatMap(u => u.posItems)
+  if (all.length === 0) { console.log("  - pos_items — tidak ada"); return }
+  const rows = all.map(i =>
+    `(${i[0]}, ${i[1]}, ${i[2]}, ${i[3]}, '${i[4]}', '${i[5]}')`
+  ).join(",\n    ")
+  await exec(`INSERT INTO "pos_items" (id, pos_transaction_id, product_id, quantity, price, subtotal) VALUES\n    ${rows}`)
+  console.log(`  ✓ pos_items — ${all.length} baris`)
+}
+
 async function seedSettings() {
   const all = USERS.map(u => u.settings)
   const rows = all.map(s =>
@@ -385,6 +501,10 @@ async function seedNeon() {
   await seedDebts()
   await seedRecurring()
   await seedSettings()
+  await seedProducts()
+  await seedStockMovements()
+  await seedPosTransactions()
+  await seedPosItems()
   console.log()
 }
 
@@ -449,6 +569,7 @@ async function main() {
   console.log("║  • admin@lianata.app  (admin)         ║")
   console.log("║  • aprilian@lianata.app  (owner/dev)  ║")
   console.log("║  • hesti@lianata.app     (admin/dev)  ║")
+  console.log("║  • toko@lianata.app      (user/toko)  ║")
   console.log("║                                       ║")
   console.log("║  Langsung login aja, ga perlu verify! ║")
   console.log("╚════════════════════════════════════════╝")

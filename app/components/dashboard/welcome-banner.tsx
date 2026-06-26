@@ -10,15 +10,29 @@ const months = [
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ]
 
-const roleGreeting: Record<string, string> = {
-  user: "Atur keuanganmu dengan cerdas!",
-  admin: "Pantau aktivitas pengguna dengan seksama.",
-  owner: "Kendalikan penuh sistem Lianata.",
+const roleGreeting: Record<string, Record<string, string>> = {
+  user: {
+    pribadi: "Atur keuangan pribadimu dengan cerdas!",
+    toko: "Kelola toko dan keuangan dalam satu tempat!",
+    umkm: "Kembangkan UMKM-mu dengan pencatatan keuangan yang rapi!",
+    perusahaan: "Kelola keuangan perusahaan secara profesional!",
+    lainnya: "Atur keuanganmu dengan cerdas!",
+  },
+  admin: { _: "Pantau aktivitas pengguna dengan seksama." },
+  owner: { _: "Kendalikan penuh sistem Lianata." },
+}
+
+const badgeDefaults: Record<string, string> = {
+  pribadi: "Belum ada tagihan jatuh tempo",
+  toko: "Pantau stok dan penjualan",
+  umkm: "Kelola proyek dan invoice",
+  perusahaan: "Pantau kinerja perusahaan",
 }
 
 export default function WelcomeBanner() {
   const { user } = useSession()
   const effectiveRole = getEffectiveRole(user.role)
+  const businessType = user.businessType || "pribadi"
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12 ? "Selamat Pagi" : hour < 17 ? "Selamat Siang" : "Selamat Malam"
@@ -34,8 +48,12 @@ export default function WelcomeBanner() {
       .catch(() => {})
   }, [])
 
+  const greetingMsg = effectiveRole === "user"
+    ? (roleGreeting.user[businessType] || roleGreeting.user.lainnya)
+    : (roleGreeting[effectiveRole]?._ || "")
+
   const defaultBadge = effectiveRole === "user"
-    ? "Belum ada tagihan jatuh tempo"
+    ? (badgeDefaults[businessType] || badgeDefaults.pribadi)
     : effectiveRole === "admin"
     ? "Memantau aktivitas"
     : "Pengawasan sistem aktif"
@@ -50,7 +68,7 @@ export default function WelcomeBanner() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white">{user.name}</h1>
           <p className="text-white/60 text-sm">{date}</p>
-          <p className="text-white/40 text-xs">{roleGreeting[effectiveRole] || "Atur keuanganmu dengan cerdas!"}</p>
+          <p className="text-white/40 text-xs">{greetingMsg}</p>
         </div>
         {badgeText && (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 text-white text-xs font-medium self-start sm:self-auto animate-[pulse-glow_2s_ease-in-out_infinite]">
