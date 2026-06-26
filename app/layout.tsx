@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     images: ["/logo-lianata-finance.png"],
   },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/logo-lianata-finance.png", sizes: "512x512" }],
-    apple: [{ url: "/logo-lianata-finance.png" }],
+    icon: "/logo-lianata-finance.png",
+    apple: "/logo-lianata-finance.png",
   },
 }
 
