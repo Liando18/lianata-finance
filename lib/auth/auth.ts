@@ -4,7 +4,9 @@ import { db } from "@/lib/db"
 import { sendResetPasswordEmail } from "@/lib/email"
 import * as schema from "@/lib/db/schema"
 
-const baseUrl = process.env.BETTER_AUTH_URL!
+const baseUrl = process.env.BETTER_AUTH_URL
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+  || "http://localhost:3000"
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
