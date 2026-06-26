@@ -5,6 +5,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const sessionToken = request.cookies.get("better-auth.session_token")
+    || request.cookies.get("__Secure-better-auth.session_token")
   const isLoggedIn = !!sessionToken?.value
 
   if (pathname.startsWith("/dashboard") && !isLoggedIn) {
